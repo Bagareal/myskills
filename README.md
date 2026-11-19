@@ -1,0 +1,69 @@
+# myskills
+
+A collection of [Claude](https://claude.ai) skills for AI product imagery. Each skill is a self-contained folder with a `SKILL.md` (the instructions Claude follows), local helper scripts and its own documentation.
+
+## Skills
+
+| Skill | What it does | Output |
+|---|---|---|
+| [render-reskin](render-reskin) | Turns a grey 3D product render into a photorealistic packshot using real product photos, keeping the geometry pixel-exact, with a position check and optional transparent cutout | Packshot on white or transparent PNG |
+| [render-to-product-video](render-to-product-video) | From a grey 3D render and product photos, creates a re-skin, a start frame in a described scene and a video that follows a reference camera move | Re-skin, start frame, video |
+
+Both skills share the same principle: **the render's geometry is never regenerated.** A multi-image editing model only paints real materials onto it, and a local check (silhouette IoU plus a 50% overlay) confirms that nothing moved before the result is shown.
+
+## Requirements
+
+- Claude with skills enabled: claude.ai, the Claude desktop app or Claude Code, with code execution.
+- A generative-AI connector (MCP) such as fal, Replicate or a Google Gemini connector, offering a multi-image editing model (Nano Banana 2.1 or 2 recommended) and, for video, a start-image + motion-reference video model (Seedance 2.5 reference-to-video recommended).
+- Python 3 with `numpy`, `Pillow` and `scipy`; `ffmpeg` for video. The scripts run locally and cost no credits.
+
+## Installation
+
+### claude.ai / Claude desktop app
+
+1. Download the skill's zip from the [latest release](../../releases/latest).
+2. In Claude's settings, open the **Skills** section and upload the zip.
+
+### Claude Code
+
+```bash
+git clone https://github.com/Bagareal/myskills.git
+mkdir -p ~/.claude/skills
+cp -r myskills/render-reskin myskills/render-to-product-video ~/.claude/skills/
+```
+
+### Building the zips yourself
+
+Each zip contains the skill folder at its root:
+
+```bash
+cd myskills
+zip -r render-reskin.zip render-reskin -x '*/__pycache__/*'
+zip -r render-to-product-video.zip render-to-product-video -x '*/__pycache__/*'
+```
+
+## Repository layout
+
+```
+myskills/
+├── render-reskin/
+│   ├── SKILL.md            # instructions for Claude
+│   ├── README.md           # documentation
+│   └── scripts/
+│       ├── pad_to_ratio.py
+│       ├── compare.py
+│       └── cutout.py
+└── render-to-product-video/
+    ├── SKILL.md
+    ├── README.md
+    └── scripts/
+        ├── pad_to_ratio.py
+        ├── compare.py
+        └── contact_sheet.py
+```
+
+`pad_to_ratio.py` and `compare.py` are duplicated on purpose, so that each skill folder works on its own.
+
+## License
+
+[MIT](LICENSE)
