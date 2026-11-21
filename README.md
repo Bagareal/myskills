@@ -8,8 +8,9 @@ A collection of [Claude](https://claude.ai) skills for AI product imagery. Each 
 |---|---|---|
 | [render-reskin](render-reskin) | Turns a grey 3D product render into a photorealistic packshot using real product photos, keeping the geometry pixel-exact, with a position check and optional transparent cutout | Packshot on white or transparent PNG |
 | [render-to-product-video](render-to-product-video) | From a grey 3D render and product photos, creates a re-skin, a start frame in a described scene and a video that follows a reference camera move | Re-skin, start frame, video |
+| [scene-reskin](scene-reskin) | Replaces the grey 3D stand-in placed in a photo of an environment (a `_SCENE` export from the 3D viewer) with the real product, same position and perspective, re-skinned from real photos and then integrated with AI-made shadows and reflections and the scene's light, with position checks | Final image |
 
-Both skills share the same principle: **the render's geometry is never regenerated.** A multi-image editing model only paints real materials onto it, and a local check (silhouette IoU plus a 50% overlay) confirms that nothing moved before the result is shown.
+These skills share the same principle: **the render's geometry is never regenerated.** A multi-image editing model only paints real materials onto it, and a local check (silhouette IoU plus a 50% overlay) confirms that nothing moved before the result is shown.
 
 ## Requirements
 
@@ -29,7 +30,7 @@ Both skills share the same principle: **the render's geometry is never regenerat
 ```bash
 git clone https://github.com/Bagareal/myskills.git
 mkdir -p ~/.claude/skills
-cp -r myskills/render-reskin myskills/render-to-product-video ~/.claude/skills/
+cp -r myskills/render-reskin myskills/render-to-product-video myskills/scene-reskin ~/.claude/skills/
 ```
 
 ### Building the zips yourself
@@ -40,6 +41,7 @@ Each zip contains the skill folder at its root:
 cd myskills
 zip -r render-reskin.zip render-reskin -x '*/__pycache__/*'
 zip -r render-to-product-video.zip render-to-product-video -x '*/__pycache__/*'
+zip -r scene-reskin.zip scene-reskin -x '*/__pycache__/*'
 ```
 
 ## Repository layout
@@ -53,16 +55,28 @@ myskills/
 │       ├── pad_to_ratio.py
 │       ├── compare.py
 │       └── cutout.py
-└── render-to-product-video/
+├── render-to-product-video/
+│   ├── SKILL.md
+│   ├── README.md
+│   └── scripts/
+│       ├── pad_to_ratio.py
+│       ├── compare.py
+│       └── contact_sheet.py
+└── scene-reskin/
     ├── SKILL.md
     ├── README.md
     └── scripts/
-        ├── pad_to_ratio.py
+        ├── unpack_scene.py
+        ├── crop_product.py
         ├── compare.py
-        └── contact_sheet.py
+        ├── cutout.py
+        ├── paste_back.py
+        ├── fit_canvas.py
+        ├── lock_background.py
+        └── compare_scene.py
 ```
 
-`pad_to_ratio.py` and `compare.py` are duplicated on purpose, so that each skill folder works on its own.
+`pad_to_ratio.py`, `compare.py` and `cutout.py` are duplicated on purpose, so that each skill folder works on its own.
 
 ## License
 
