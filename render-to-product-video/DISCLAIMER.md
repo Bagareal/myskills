@@ -8,4 +8,4 @@ The example in `examples/kitchen-orbit/` (renders, generated images, contact she
 - The generated images and video are AI outputs and may differ from the real product in details. They are not a representation of the real product.
 - If you are a rights holder and want the example media removed, please open an issue and they will be removed promptly.
 
-The code, scripts and documentation are licensed under the MIT license (see `LICENSE`).
+The code, scripts and documentation are licensed under the MIT license (see [LICENSE](../LICENSE)).

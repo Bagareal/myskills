@@ -1,6 +1,6 @@
 # Verification
 
-All checks run locally. They cost no generation credits and never regenerate anything. If a check fails you regenerate that single step, and that is the only cost.
+All checks run locally. They cost no generation credits and never regenerate anything. If a check fails you regenerate that single step, and that is the only cost. If the same step fails twice, stop and look for the cause (wrong model, a parameter left on `auto`, a prompt that asks for too much) instead of regenerating again.
 
 ## Geometry: overlay and IoU
 

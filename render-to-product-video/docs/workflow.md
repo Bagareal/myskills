@@ -2,6 +2,8 @@
 
 The pipeline has six stages. Stages 2, 3 and 5 are generations (they cost credits); the others, and every verification, are local code or review.
 
+The commands below are run from the skill folder (`render-to-product-video/`). The stage numbers here group the work by what is generated; `SKILL.md` splits the same work into more steps, because it also lists every form Claude asks.
+
 ## Stage 0: collect inputs
 
 Required:
@@ -16,6 +18,9 @@ Decisions to settle up front:
 - **Aspect ratio.** 16:9 by default, 9:16 for vertical. If a vertical video is wanted but the camera reference is 16:9, the path is still copied but the framing may change (the product can look narrower or get cropped). Say so before generating.
 - **Video duration and resolution.** Match the reference duration where possible. Use 1080p when panel text must stay readable.
 - **Scene content.** Props, steam, a cup being filled and so on.
+- **Budget.** Read the balance and price the job before generating anything, in this order: the video with the chosen model, duration and resolution, then the re-skin and the start frame. The video costs far more than both images together (on Magnific a 10 s 1080p Seedance 2.5 video was quoted at more than 5400 credits, an image at about 70). If the balance does not cover the video plus one retry of each image step, do not start: lower the resolution or the duration, pick another model or connector, or add credits. Prices per connector are in [models.md](models.md).
+
+Set every generation parameter explicitly: model, aspect ratio, resolution. A connector default such as `auto` can pick another model or another framing (see [troubleshooting.md](troubleshooting.md)).
 
 Translate vague wishes into concrete light: where it comes from, whether it is hard or soft, where it falls, what stays in shadow. "Cinematic edge light" on its own produced random reflections; "a thin soft rim light from behind-left grazing only the left edge, everything else in deep shadow" did not.
 
@@ -39,7 +44,7 @@ Inputs to the image model: the render first, then the real photos. The prompt st
 python3 -I scripts/compare.py render_16x9.png reskin.png side_by_side.png blend.png
 ```
 
-Open `blend.png` (crop to the product if needed). If contours, seams and proportions line up with no double edges, continue. If not, regenerate this step only.
+Open `blend.png` (crop to the product if needed). If contours, seams and proportions line up with no double edges, continue. If not, regenerate this step only, with the same prompt and settings. If it fails a second time, stop and decide with the user: do not try other tools (crop and paste back, replace background, outpaint, a higher resolution) to rescue it, because each attempt costs and none of them fixes the cause.
 
 ## Stage 3: start frame (generation 2)
 

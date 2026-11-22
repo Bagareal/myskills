@@ -2,7 +2,7 @@
 
 A Claude skill that turns a **grey 3D product render** into a **product video**: it re-skins the render with the real materials from product photos, places the product in a scene described by the user, then animates it with a camera move copied from a reference video.
 
-The product geometry comes from the render at every step and is never regenerated. Each step is checked before the next one starts, and the start frame must be approved before any video credits are spent.
+The product geometry comes from the render at every step and is never regenerated. Each step is checked before the next one starts, and the start frame must be approved before any video credits are spent. Before the first generation Claude checks that your balance covers the whole job, video included, and stops if it does not.
 
 ## Why
 
@@ -26,7 +26,7 @@ product photos ──► materials list           scene + light                 
 | Step | What happens | Where |
 |---|---|---|
 | 0. Inputs | Render, product photos, reference video, optional environment photos; finds usable connectors | chat |
-| 1. Settings | Image model, video model, aspect ratio, duration and resolution | form |
+| 1. Settings | Image model, video model, aspect ratio, duration and resolution; then balance and total cost, before anything is generated | form + connector |
 | 2. Scene | Environment, concrete light, scene content, audio | form |
 | 3. Materials | Claude lists material and colour of each part; the user confirms or corrects | form |
 | 4. Canvas | Render padded (never cropped) to the target ratio | local script |
@@ -41,11 +41,11 @@ Every choice is asked through multiple-choice forms; Claude talks to the user in
 ## Requirements
 
 - **Claude** with skills enabled (claude.ai, Claude desktop app, or Claude Code).
-- **A generative-AI connector** (MCP), for example fal, Replicate or a Google Gemini connector, offering:
+- **A generative-AI connector** (MCP), for example fal, Magnific, Replicate or a Google Gemini connector, offering:
   - a multi-image **editing model**: **Nano Banana 2.1** recommended, then **Nano Banana 2**;
   - a **video model** that takes a start image plus a motion-reference video: **Seedance 2.5 reference-to-video** recommended.
 
-  If either is missing, the skill suggests a connector.
+  If either is missing, the skill suggests a connector. The video step is by far the most expensive: see [Connectors and credits](#connectors-and-credits).
 - **Python 3** with `numpy` and `Pillow`, and **ffmpeg**, in the environment where Claude runs code. The scripts cost no credits.
 
 ## Installation
@@ -102,6 +102,42 @@ Then attach:
 
 **Duration:** the video matches the reference's length. Do not speed the reference up to shorten the video: the first frame drifts away from the approved start frame.
 
+## Connectors and credits
+
+The steps and the scripts are the same on every connector; only the names of the generation parameters change. The skill was built on fal. On Magnific the same run wasted credits: model and aspect ratio were left on `auto`, the re-skin came back mirrored and enlarged, Claude tried crop and paste back, replace background, outpaint and 4K to rescue it, and the credits ran out before the video. The skill now follows these rules everywhere:
+
+- **Cost first.** Right after the settings form Claude reads the balance and prices the video with the chosen model, duration and resolution, then the two image steps. If the balance does not cover the video plus one retry of each image step, it says so, offers what fits (lower resolution, shorter duration, another model or connector) and generates nothing.
+- **Nothing on `auto`.** Model, aspect ratio and resolution are always set explicitly.
+- **Only the skill's steps.** No extra tools to rescue a failed step.
+- **Stop after two failures.** If a step fails its check twice, Claude stops, shows what went wrong and asks, giving the cost of each option.
+- **Cost before each call.** One line with the price before every paid generation.
+
+### Parameters per connector
+
+| | fal | Magnific |
+|---|---|---|
+| Image model | `google/nano-banana-2.1/edit` or `fal-ai/nano-banana-2/edit` | `images_generate` with `mode: imagen-nano-banana-2-flash` (Nano Banana 2; `imagen-nano-banana-2` is Nano Banana Pro) |
+| Image inputs | `image_urls`: canvas first, then photos | `references` of type `image`: canvas first, then photos |
+| Image settings | `aspect_ratio` explicit, `resolution` `2K`, `thinking_level` `high` | `aspectRatio` explicit, `resolution` `2k` |
+| Video model | Seedance 2.5 reference-to-video, task `reference` | `video_generate` with `slug: bytedance-seedance-pro-2.5` |
+| Video inputs | `image_urls` (start frame first, then photos), `video_urls` | start frame as the first `image` reference (`@Image1`), photos as further `image` references, the camera reference as a `video` reference. On Magnific `keyframes.start` cannot be combined with references, so it is not used. |
+| Audio | `generate_audio` false | `withSoundEffects` false |
+| Cost tools | `estimate_cost` | `account_balance`, then `simulate_cost` |
+
+### Prices seen on Magnific (November 2026, indicative)
+
+| Generation | Credits |
+|---|---|
+| Image edit at 2K | about 65-75 |
+| Image edit at 4K | about 150 |
+| Seedance 2.5, 10 s, 1080p | 5400 or more |
+| Seedance 2.5, 5 s, 720p | 1300 or more |
+| Seedance 2.5 Flash, 10 s, 720p | 1700 or more |
+
+The video quotes from `simulate_cost` leave out the seconds of the reference video, which are billed too, so the real price is higher. On a Premium plan (20,000 credits a month, no extra credit packs) a single 10 s 1080p video takes more than a quarter of the month.
+
+Full parameter tables and model limits: [docs/models.md](docs/models.md).
+
 ## Scripts
 
 All scripts are in [`scripts/`](scripts) and can also be used on their own.
@@ -149,9 +185,34 @@ Used twice: to read the reference camera move before writing the prompt (a move 
 | Random reflections, light streaks | Vague light description | Light attached to the product, slow, with direction and fall-off |
 | Stray transparent objects, tiny coloured lights, lighter front at the end | Video model artefacts | Spotted on the contact sheet; regenerate |
 | Unreadable panel text | 720p | Use 1080p |
+| Re-skin mirrored or enlarged on Magnific | Model and aspect ratio left on `auto` | Nano Banana 2 and the ratio set explicitly |
+| Credits gone before the video | Images and rescue attempts first, video never priced | Price the video before the first generation; stop after two failures |
 
 Seedance 2.5 reference limits (check the schema of the model you use): 1.8-30.2 s, 300-6000 px per side, aspect ratio 0.4-2.5, 24-60 fps, up to 200 MB.
 
+## Documentation
+
+| File | Contents |
+|---|---|
+| [`docs/workflow.md`](docs/workflow.md) | The pipeline step by step, with the reasoning behind each step |
+| [`docs/prompts.md`](docs/prompts.md) | Prompt templates for re-skin, start frame and video, with placeholders |
+| [`docs/verification.md`](docs/verification.md) | How to read the checks: IoU, overlay, contact sheet |
+| [`docs/models.md`](docs/models.md) | Model roles, parameters per connector, limits, how to swap models |
+| [`docs/troubleshooting.md`](docs/troubleshooting.md) | Every failure seen so far, with cause and fix |
+| [`examples/kitchen-orbit/`](examples/kitchen-orbit/README.md) | A complete worked example with screenshots, checks and the output video |
+
+## Example
+
+Grey render, re-skin and start frame from the worked example, then the output video one frame every 0.5 s. The full walkthrough, with the overlay checks and the camera reference, is in [`examples/kitchen-orbit`](examples/kitchen-orbit/README.md).
+
+| Grey render | Re-skin | Start frame |
+|---|---|---|
+| ![render](examples/kitchen-orbit/images/01_render_input.jpg) | ![re-skin](examples/kitchen-orbit/images/02_reskin.jpg) | ![start frame](examples/kitchen-orbit/images/04_start_frame.jpg) |
+
+![output contact sheet](examples/kitchen-orbit/images/07_output_contact_sheet.jpg)
+
+> **For illustration only.** The example shows a commercial coffee machine. Brands, logos and designs belong to their owners; this project is not affiliated with them. See [DISCLAIMER.md](DISCLAIMER.md).
+
 ## License
 
-[MIT](../LICENSE)
+[MIT](../LICENSE). The example media are not covered by the license: see [DISCLAIMER.md](DISCLAIMER.md).

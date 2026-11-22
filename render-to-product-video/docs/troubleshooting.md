@@ -52,6 +52,16 @@ Failure modes seen while building this pipeline, with the fix for each.
 **Cause.** Low resolution.
 **Fix.** Render at 1080p. Small panel text is the first thing lost at 720p.
 
+## The re-skin comes back mirrored or enlarged (Magnific)
+
+**Cause.** Model and aspect ratio left on Magnific's `auto` default. The connector picks the model and the framing itself, and an edit can snap to another ratio.
+**Fix.** Set the model explicitly (`imagen-nano-banana-2-flash` is Nano Banana 2; `imagen-nano-banana-2` is Nano Banana Pro), the aspect ratio of the canvas and `2k`. See [models.md](models.md).
+
+## The credits ran out before the video
+
+**Cause.** The images were generated without pricing the video first, and failed steps were "rescued" with other tools (crop and paste back, replace background, outpaint, 4K), each one paid. In the run that showed this, 8 image generations cost 900 Magnific credits, 4 of them discarded, while the video alone would have cost more than 5400.
+**Fix.** Price the video before the first generation and do not start if the balance does not cover it. Regenerate a failed step at most once more with the same settings, then stop and decide. Use only the steps of the pipeline.
+
 ## Vertical (9:16) output looks cropped or the framing changed
 
 **Cause.** The camera reference is 16:9, the output is 9:16.
