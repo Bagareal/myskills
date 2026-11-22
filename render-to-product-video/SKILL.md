@@ -28,11 +28,15 @@ Do not modify `compare.py`: it is the reference check.
 - Images: always an image-editing model with several input images. Preferred: Nano Banana 2.1, then Nano Banana 2, on whichever connector offers them (for example on fal: `google/nano-banana-2.1/edit`, `fal-ai/nano-banana-2/edit`). A general text-to-image model deforms the product: never use one.
 - Video: a model with a start image plus a motion-reference video. Preferred: Seedance 2.5 reference-to-video; another model with the same inputs is acceptable if the user picks it. Audio off unless asked.
 - Never guess endpoint IDs or parameter names: read them from the connector's own model search and schema tools.
+- Never leave model, aspect ratio or resolution on a connector's `auto` default: set each one explicitly (see Connector notes).
 - Always show the start frame and wait for the user's approval before generating the video.
 - If a check fails, say so and regenerate only that step. Never present a flawed result as good.
 - Never describe the camera move from memory: inspect the reference every 0.5 s first.
 - From the reference video copy only the camera path and timing.
 - Do not add anything personal, or about the user's employer or clients, to files, prompts or documentation produced with this skill.
+- Budget first: before the first paid generation, check the balance and estimate the cost of the whole pipeline (re-skin + start frame + video). The video is by far the most expensive step. If the balance does not cover the video plus one retry of each image step, stop and tell the user before spending anything.
+- Only the steps in this skill. Do not improvise other tools or tricks to rescue a failed step (crop and paste back, replace background, outpaint, upscale, 4K). If a step fails twice, stop, show what went wrong and ask, giving the cost of each option.
+- State the cost of each paid call in one line before running it.
 
 ## Step 0: inputs (chat)
 
@@ -57,6 +61,8 @@ One AskUserQuestion form with these four questions:
 9:16: if the user provides a vertical reference video, use it. If the reference is 16:9, proceed but warn that the camera path is copied and the framing may change (the product can look narrower or get cropped); repeat the warning when showing the start frame.
 
 If only one product photo was given, repeat the warning about unseen parts in the question text or right before the form.
+
+Budget check, right after this form: read the balance, then the cost of the video with the chosen model, duration and resolution, then of the image steps, with the connector's own tools (see Connector notes). Show the total to the user. If it does not fit, say so and offer what does (lower resolution, shorter duration, another model or connector). Do not start until it fits.
 
 ## Step 2: scene (form)
 
@@ -146,6 +152,21 @@ Look at every tile and report honestly: camera path against the reference, produ
 
 Deliver in order with SendUserFile: re-skin, start frame, video. No contact sheets or overlays at this stage. Report in one or two sentences what passed and anything assumed (parts no photo showed).
 
+## Connector notes
+
+The steps are the same on every connector; only the parameter names change. Always read the schema; these notes record what was found so far.
+
+fal:
+- Images: `google/nano-banana-2.1/edit` or `fal-ai/nano-banana-2/edit`, `image_urls` (canvas first), `aspect_ratio` set explicitly, `resolution` `2K`, `thinking_level` `high`.
+- Video: Seedance 2.5 reference-to-video, `image_urls` (start frame first), `video_urls`, task `reference`, duration as a string, `generate_audio` false.
+- Cost: `estimate_cost`.
+
+Magnific:
+- Images: `images_generate` with `mode: imagen-nano-banana-2-flash` (this is Nano Banana 2; `imagen-nano-banana-2` is Nano Banana Pro), `aspectRatio` set to the canvas ratio, `resolution: 2k`. Image 1 = first `references` entry of type `image`, then the real photos. Do not use `images_replace_background`, `images_expand` or other image tools in this pipeline.
+- Video: `video_generate` with `slug: bytedance-seedance-pro-2.5`, `withSoundEffects: false`. On Magnific `keyframes.start` cannot be combined with references: pass the approved start frame as the first `image` reference (@Image1), the real photos as further `image` references, the camera reference as a `video` reference.
+- Cost: `account_balance`, then `simulate_cost` with the real arguments. The video quote leaves out the seconds of the reference video, so the real price is higher.
+- Prices seen (Nov 2026, indicative): image edit about 65-75 credits at 2K, 150 at 4K; Seedance 2.5 10 s 1080p 5400+ credits, 5 s 720p 1300+; Seedance 2.5 Flash 10 s 720p 1700+.
+
 ## Known failure modes
 
 - A general image model deforms the product: use an editing model on the render.
@@ -156,3 +177,5 @@ Deliver in order with SendUserFile: re-skin, start frame, video. No contact shee
 - Random reflection or light streak: describe the light as attached to the product, slow, with direction and fall-off.
 - Stray transparent object near the base, tiny coloured lights, a lighter front in the final frames: check on the contact sheet.
 - Small panel text unreadable at 720p: use 1080p.
+- Magnific with model and aspect ratio left on auto: re-skin on the full canvas came back mirrored and enlarged. Set Nano Banana 2 and the ratio explicitly.
+- Credits spent on images and repair attempts, none left for the video: check the video cost before the first generation.
