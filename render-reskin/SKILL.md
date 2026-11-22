@@ -27,9 +27,12 @@ Do not modify `compare.py`: it is the reference check.
 
 - Always an image-editing model with several input images. Preferred: Nano Banana 2.1, then Nano Banana 2, on whichever connector offers them (for example on fal: `google/nano-banana-2.1/edit`, `fal-ai/nano-banana-2/edit`). Another multi-image editing model is acceptable if the user picks it, but the position check decides. A general text-to-image model deforms the product: never use one.
 - Never guess endpoint IDs or parameter names: read them from the connector's own model search and schema tools.
+- Never leave model, aspect ratio or resolution on a connector's `auto` default: set each one explicitly (see Connector notes).
 - Image 1 is always the render (padded if needed); the real photos follow.
 - Never present a result that failed the check as good. Say what is wrong and regenerate.
 - Do not add anything personal, or about the user's employer or clients, to files, prompts or documentation produced with this skill.
+- Only the steps in this skill. Do not improvise other tools or tricks to rescue a failed check (crop and paste back, replace background, outpaint, upscale). If the position check fails twice in a row, stop, show the overlay and ask, giving the cost of each option.
+- State the cost of each paid generation in one line before running it.
 
 ## Step 0: inputs (chat)
 
@@ -51,6 +54,8 @@ One AskUserQuestion form with these four questions:
 4. Resolution and variants: 2K, 1 image (Recommended) / 4K, 1 image / 2K, 2 variants / 1K, 4 variants. Any other combination can be typed (1K/2K/4K, 1-4 images).
 
 If only one product photo was given, repeat the warning about unseen parts in the question text or right before the form.
+
+Cost check, right after this form: read the balance and the cost of one round with the chosen resolution and number of images, with the connector's own tools (see Connector notes). Tell the user the cost per round. If the balance does not cover it, say so before generating.
 
 ## Step 2: materials (form)
 
@@ -118,6 +123,19 @@ The script also writes `<name>_preview_red.png` and `<name>_preview_dark.png`. C
 
 Send only the final image with SendUserFile: the transparent PNG (or the white packshot if white was chosen). No previews, no overlay, no intermediate re-skin at this stage: the overlay was already shown in step 6. With several accepted variants, send only the final image of each. Report in one or two sentences what passed, any edge defect found in the previews, and anything assumed (parts no photo showed).
 
+## Connector notes
+
+The steps are the same on every connector; only the parameter names change. Always read the schema; these notes record what was found so far.
+
+fal:
+- `google/nano-banana-2.1/edit` or `fal-ai/nano-banana-2/edit`, `image_urls` (canvas first), `aspect_ratio` set explicitly, `resolution` as chosen, `num_images` for variants, `thinking_level` `high`.
+- Cost: `estimate_cost`.
+
+Magnific:
+- `images_generate` with `mode: imagen-nano-banana-2-flash` (this is Nano Banana 2; `imagen-nano-banana-2` is Nano Banana Pro), `aspectRatio` set to the canvas ratio, `resolution` `2k` or `4k` as chosen, `count` for variants (one call, never one call per variant). Image 1 = first `references` entry of type `image`, then the real photos. Do not use `images_replace_background`, `images_remove_background`, `images_expand` or other image tools in this skill: the white background comes from the prompt and the cutout from `cutout.py`.
+- Cost: `account_balance`, then `simulate_cost` with the real arguments.
+- Prices seen (Nov 2026, indicative): about 65-75 credits per image at 2K, 150 at 4K.
+
 ## Known failure modes
 
 - General image model instead of an editing model: the product deforms.
@@ -125,3 +143,5 @@ Send only the final image with SendUserFile: the transparent PNG (or the white p
 - White parts on a white background: fine for the packshot, but never use an AI background remover for the cutout; use the render-derived or user mask.
 - Asking for a scene or props in the same edit shifts the perspective: this skill is plain background only.
 - Fringe on cutout edges: generate on the render's own background (already the rule for transparent) and use a user mask when edges matter.
+- Magnific with model and aspect ratio left on auto: re-skin on the full canvas came back mirrored and enlarged. Set Nano Banana 2 and the ratio explicitly.
+- Repeated regenerations and rescue edits after a failed check burn credits without fixing the cause: stop after two failures and ask.

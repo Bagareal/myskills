@@ -19,7 +19,7 @@ grey render ──► pad to ratio ──► re-skin (editing model, render + ph
 | Step | What happens | Where |
 |---|---|---|
 | 0. Inputs | Render, product photos, optional mask; finds a usable connector | chat |
-| 1. Settings | Connector and model, background, aspect ratio, resolution and variants | form |
+| 1. Settings | Connector and model, background, aspect ratio, resolution and variants; then balance and cost per round | form + connector |
 | 2. Materials | Claude lists material and colour of each part; the user confirms or corrects | form |
 | 3. Canvas | Render padded (never cropped) to the target ratio | local script |
 | 4. Re-skin | Editing model call with a geometry-locking prompt | connector |
@@ -32,7 +32,7 @@ Every choice is asked through multiple-choice forms; Claude talks to the user in
 ## Requirements
 
 - **Claude** with skills enabled (claude.ai, Claude desktop app, or Claude Code).
-- **A generative-AI connector** (MCP) that offers a multi-image editing model, for example fal, Replicate or a Google Gemini connector. Recommended model: **Nano Banana 2.1**, then **Nano Banana 2**. If no connector is available, the skill suggests one.
+- **A generative-AI connector** (MCP) that offers a multi-image editing model, for example fal, Magnific, Replicate or a Google Gemini connector. Recommended model: **Nano Banana 2.1**, then **Nano Banana 2**. If no connector is available, the skill suggests one.
 - **Python 3** with `numpy`, `Pillow` and `scipy` in the environment where Claude runs code. The scripts cost no credits.
 
 ## Installation
@@ -84,6 +84,26 @@ Then attach:
 
 If a setting does not exist on the chosen connector, Claude says which one and what it used instead.
 
+## Connectors and credits
+
+The steps and the scripts are the same on every connector; only the names of the generation parameters change. The skill was built on fal. On Magnific, with model and aspect ratio left on `auto`, a re-skin came back mirrored and enlarged, and rescue attempts with other tools (crop and paste back, replace background, outpaint, 4K) only added cost. The skill now follows these rules everywhere:
+
+- **Cost first.** Right after the settings form Claude reads the balance and the price of one round (all variants at the chosen resolution) and tells you. If the balance does not cover it, it says so before generating.
+- **Nothing on `auto`.** Model, aspect ratio and resolution are always set explicitly.
+- **Only the skill's steps.** No extra tools to rescue a failed check. The white background comes from the prompt and the transparent cutout from `cutout.py`, never from the connector's background tools.
+- **Stop after two failures.** If the position check fails twice in a row, Claude stops, shows the overlay and asks, giving the cost of each option.
+- **Cost before each call.** One line with the price before every paid generation.
+
+| | fal | Magnific |
+|---|---|---|
+| Model | `google/nano-banana-2.1/edit` or `fal-ai/nano-banana-2/edit` | `images_generate` with `mode: imagen-nano-banana-2-flash` (Nano Banana 2; `imagen-nano-banana-2` is Nano Banana Pro) |
+| Inputs | `image_urls`: canvas first, then photos | `references` of type `image`: canvas first, then photos |
+| Settings | `aspect_ratio` explicit, `resolution` as chosen, `thinking_level` `high` | `aspectRatio` explicit, `resolution` `2k` or `4k` as chosen |
+| Variants | `num_images` | `count`, in one call (never one call per variant) |
+| Cost tools | `estimate_cost` | `account_balance`, then `simulate_cost` |
+
+Prices seen on Magnific (November 2026, indicative): about 65-75 credits per image at 2K, about 150 at 4K.
+
 ## Scripts
 
 All scripts are in [`scripts/`](scripts) and can also be used on their own.
@@ -134,6 +154,8 @@ Run it only after the position check passed: if the product moved, the mask no l
 | Parts cut in the cutout | Surface almost the same colour as the render background | Provide a mask |
 | Light fringe on edges | Generated on a different background | Transparent mode generates on the render's own background; a mask helps further |
 | White parts lost | AI background remover on white | Never used here: the mask comes from the render or the user |
+| Re-skin mirrored or enlarged on Magnific | Model and aspect ratio left on `auto` | Nano Banana 2 and the ratio set explicitly |
+| Credits burned on retries | Regenerating and rescue edits after failed checks | Stop after two failures and ask |
 
 ## License
 
