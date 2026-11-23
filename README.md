@@ -1,6 +1,6 @@
 # myskills
 
-A collection of [Claude](https://claude.ai) skills for AI product imagery. Each skill is a self-contained folder with a `SKILL.md` (the instructions Claude follows), local helper scripts and its own documentation.
+A collection of [Claude](https://claude.ai) skills, mostly for AI product imagery. Each skill is a self-contained folder with a `SKILL.md` (the instructions Claude follows), local helper scripts and its own documentation.
 
 ## Skills
 
@@ -8,9 +8,10 @@ A collection of [Claude](https://claude.ai) skills for AI product imagery. Each 
 |---|---|---|
 | [render-reskin](render-reskin) | Turns a grey 3D product render into a photorealistic packshot using real product photos, keeping the geometry pixel-exact, with a position check and optional transparent cutout | Packshot on white or transparent PNG |
 | [render-to-product-video](render-to-product-video) | From a grey 3D render and product photos, creates a re-skin, a start frame in a described scene and a video that follows a reference camera move | Re-skin, start frame, video |
+| [ramble-to-brief](ramble-to-brief) | Turns a free-form ramble about a job (typed or dictated) into a complete brief, shows what it understood, asks all open questions in one round, then runs the job autonomously after an explicit go | Brief, then the finished job |
 | [scene-reskin](scene-reskin) | Replaces the grey 3D stand-in placed in a photo of an environment (a `_SCENE` export from the 3D viewer) with the real product, same position and perspective, re-skinned from real photos and then integrated with AI-made shadows and reflections and the scene's light, with position checks | Final image |
 
-These skills share the same principle: **the render's geometry is never regenerated.** A multi-image editing model only paints real materials onto it, and a local check (silhouette IoU plus a 50% overlay) confirms that nothing moved before the result is shown.
+The three imagery skills share the same principle: **the render's geometry is never regenerated.** A multi-image editing model only paints real materials onto it, and a local check (silhouette IoU plus a 50% overlay) confirms that nothing moved before the result is shown.
 
 ## Requirements
 
@@ -44,7 +45,7 @@ Each skill's README has a "Connectors and credits" section with the exact parame
 ```bash
 git clone https://github.com/Bagareal/myskills.git
 mkdir -p ~/.claude/skills
-cp -r myskills/render-reskin myskills/render-to-product-video myskills/scene-reskin ~/.claude/skills/
+cp -r myskills/ramble-to-brief myskills/render-reskin myskills/render-to-product-video myskills/scene-reskin ~/.claude/skills/
 ```
 
 ### Building the zips yourself
@@ -56,12 +57,16 @@ cd myskills
 zip -r render-reskin.zip render-reskin -x '*/__pycache__/*'
 zip -r render-to-product-video.zip render-to-product-video -x '*/__pycache__/*' 'render-to-product-video/examples/*'
 zip -r scene-reskin.zip scene-reskin -x '*/__pycache__/*'
+zip -r ramble-to-brief.zip ramble-to-brief
 ```
 
 ## Repository layout
 
 ```
 myskills/
+├── ramble-to-brief/
+│   ├── SKILL.md
+│   └── README.md
 ├── render-reskin/
 │   ├── SKILL.md            # instructions for Claude
 │   ├── README.md           # documentation
