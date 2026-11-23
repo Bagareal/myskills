@@ -10,6 +10,7 @@ A collection of [Claude](https://claude.ai) skills, mostly for AI product imager
 | [render-to-product-video](render-to-product-video) | From a grey 3D render and product photos, creates a re-skin, a start frame in a described scene and a video that follows a reference camera move | Re-skin, start frame, video |
 | [ramble-to-brief](ramble-to-brief) | Turns a free-form ramble about a job (typed or dictated) into a complete brief, shows what it understood, asks all open questions in one round, then runs the job autonomously after an explicit go | Brief, then the finished job |
 | [scene-reskin](scene-reskin) | Replaces the grey 3D stand-in placed in a photo of an environment (a `_SCENE` export from the 3D viewer) with the real product, same position and perspective, re-skinned from real photos and then integrated with AI-made shadows and reflections and the scene's light, with position checks | Final image |
+| [video-digest](video-digest) | Digests a pasted video or podcast transcript on any topic: accuracy score from web fact-checks, usefulness score for you, numbered summary with a verdict per point, what you can use, then deep dives on the points you pick | Digest, then deep dives |
 
 The three imagery skills share the same principle: **the render's geometry is never regenerated.** A multi-image editing model only paints real materials onto it, and a local check (silhouette IoU plus a 50% overlay) confirms that nothing moved before the result is shown.
 
@@ -45,7 +46,7 @@ Each skill's README has a "Connectors and credits" section with the exact parame
 ```bash
 git clone https://github.com/Bagareal/myskills.git
 mkdir -p ~/.claude/skills
-cp -r myskills/ramble-to-brief myskills/render-reskin myskills/render-to-product-video myskills/scene-reskin ~/.claude/skills/
+cp -r myskills/ramble-to-brief myskills/render-reskin myskills/render-to-product-video myskills/scene-reskin myskills/video-digest ~/.claude/skills/
 ```
 
 ### Building the zips yourself
@@ -58,6 +59,7 @@ zip -r render-reskin.zip render-reskin -x '*/__pycache__/*'
 zip -r render-to-product-video.zip render-to-product-video -x '*/__pycache__/*' 'render-to-product-video/examples/*'
 zip -r scene-reskin.zip scene-reskin -x '*/__pycache__/*'
 zip -r ramble-to-brief.zip ramble-to-brief
+zip -r video-digest.zip video-digest
 ```
 
 ## Repository layout
@@ -85,18 +87,21 @@ myskills/
 │   ├── docs/               # workflow, prompts, verification, models, troubleshooting
 │   └── examples/
 │       └── kitchen-orbit/  # complete worked example with screenshots and video
-└── scene-reskin/
+├── scene-reskin/
+│   ├── SKILL.md
+│   ├── README.md
+│   └── scripts/
+│       ├── unpack_scene.py
+│       ├── crop_product.py
+│       ├── compare.py
+│       ├── cutout.py
+│       ├── paste_back.py
+│       ├── fit_canvas.py
+│       ├── lock_background.py
+│       └── compare_scene.py
+└── video-digest/
     ├── SKILL.md
-    ├── README.md
-    └── scripts/
-        ├── unpack_scene.py
-        ├── crop_product.py
-        ├── compare.py
-        ├── cutout.py
-        ├── paste_back.py
-        ├── fit_canvas.py
-        ├── lock_background.py
-        └── compare_scene.py
+    └── README.md
 ```
 
 `pad_to_ratio.py`, `compare.py` and `cutout.py` are duplicated on purpose, so that each skill folder works on its own.
