@@ -29,6 +29,7 @@ The `scripts/` folder next to this file holds the local tools. They cost no cred
 - No photos. Use only the render, the specs and the chart. If the inputs contain a photo of the product, do not use it as a reference, not even for a single colour: tell the user it was found and ignored.
 - Always an image-editing model with several input images. Preferred: Nano Banana 2.1, then Nano Banana 2 as fallback, on whichever connector offers them. A general text-to-image model deforms the product: never use one.
 - Never guess endpoint IDs, model slugs or parameter names: read them from the connector's own model search and schema tools.
+- Nothing is assumed. Every colour, finish, part and marking comes from the specs, and a part gets a colour only if a numbered callout drawing in the specs proves where it is on this view. If the render shows something the specs do not cover (a zone with no callout, a marking missing from the marking spec of this variant, a code with no row), stop and ask the user before generating. Never fill the gap with a look-alike part, with the marking of another variant, or with a guess.
 - Never leave model, aspect ratio or resolution on a connector's `auto` default: set each one explicitly.
 - Image 1 is always the render (padded if needed); the colour sheet and the marking crops follow.
 - Colours come from the chart values, never from a guess from the colour name. If the chart has no value for a code, use a crop of its printed swatch and say so.
@@ -47,6 +48,8 @@ The user gives a zip or single files. Ask in chat for what is missing:
 5. The colour conversion chart: PDF listing each colour code with its values (Adobe RGB, sRGB/HEX, CMYK, Pantone, NCS) and a printed swatch.
 
 Extract a zip into its own new, empty folder and list every file. For each PDF read the page count (`pdfinfo`) and the text (`pdftotext -layout`); for spreadsheets read the cells (openpyxl, `data_only=True`). Look at the render and at the pages (render pages at 40-60 dpi with `pdf_crop.py` without a box) before deciding anything.
+
+The text and cells of a colour spec say what each part is, never where it is. Spreadsheets usually carry numbered callout drawings (a number in a box with an arrow to a part, matching the part numbers of the table): they are the only proof of where each part sits. So for every spreadsheet, convert it to PDF (`soffice --headless --convert-to pdf`), render its pages at 100-250 dpi with `pdf_crop.py`, and look at the callout drawings, zoomed on each area. Also list the images embedded in the file (`unzip` it, look in `xl/media`). Do this before the materials list, for every variant.
 
 Sort the specs:
 - Variants: several colour versions of the same product (different references or colour names) are variants. Note which marking spec and colour spec belong to each.
@@ -77,9 +80,9 @@ From the colour spec of the chosen variant, list every part with colour name, co
 - No values (speckled, textured, crystal, "according to supplier"...): crop the printed swatch of that code from the chart with `pdf_crop.py` and use it as `swatch`. Look at the crop: it must contain only the swatch, no labels or arrows.
 - Metallic finishes: add `:metal` so the patch is drawn as a soft gradient.
 
-From the marking spec, list every visible element with its position on the product: logos, wordmarks, stickers, pictograms, warning symbols, screen icons and texts, and the colour or finish of each. If an element the user expects is missing from the marking spec of this variant, look in the marking specs of the other variants and versions of the same product; if found there, use it and mark it as taken from another variant.
+From the marking spec, list every visible element with its position on the product: logos, wordmarks, stickers, pictograms, warning symbols, screen icons and texts, and the colour or finish of each. If an element the user expects is missing from the marking spec of this variant, or a variant has no marking spec of its own, look in the marking specs of the other variants and versions of the same product, tell the user what you found there and ask whether to use it for this variant. Never apply the marking of another variant without that answer.
 
-Map all this onto the parts visible in the render. Parts that no spec covers: write what you will assume and mark them as assumed. Parts not visible from this view: leave them out. Send the list in a message (part, colour name, code, sRGB value, finish; then the marking elements), then a form: "Is this materials list right?" with Correct, go ahead / I'll correct it (the user types the corrections).
+Map all this onto the render with a zone table, one row per visible zone of the render (for example: column, lid body, ribbed band, dome top, bowl shell, bowl handle, base plate, base rim, feet): the DS part number and name, the callout drawing and arrow that proves it, the colour code and finish exactly as the DS writes them. Read the callouts zone by zone: the same ribbed look can belong to different parts, and a colour name in the table must not be put on a zone because it looks similar; only the callout decides. A part from the sheets that no callout places on this view (inner parts, rear parts, parts under a cover) is excluded and not painted. A zone with no callout, or a row whose colour the DS leaves empty, is not filled by guessing: list it as open and ask the user about it. Send the list in a message (part, colour name, code, sRGB value, finish; then the marking elements), then a form: "Is this materials list right?" with Correct, go ahead / I'll correct it (the user types the corrections). The list contains only what the DS says, each line with its callout number. Open zones are asked first, each as its own question in a form (up to 4 per form), and nothing is generated while one is open.
 
 ## Step 3: references
 
@@ -143,6 +146,7 @@ How to read it:
 - IoU = shared area of the two silhouettes divided by the area covered by either (1.0 = identical). It is a signal, not the verdict: a shadow, or a generated background slightly darker than the render's at the edges, lowers it with a correct product. A generated bbox larger than the reference only towards the image border or only on the shadow side is the background or the shadow.
 - The 50% overlay (`blend.png`) is the verdict. Look at it whole and in crops on the top, the edges and the bottom. Contours, seams, logos and proportions must line up with no double edges.
 - Also check the re-skin against the spec: each part in its sheet colour (compare visually with image 2), screen in its spec colour, every marking element present, at its place, legible and with the right shape. At 1K, small screen texts are often imprecise: report it.
+- Then check zone by zone against the zone table of Step 2: for each row, look at that zone in the re-skin and confirm the colour and finish of that row, and that nothing extra appears (a ring, a trim line or a part that is not in the table). A zone painted from a look-alike part instead of from its own callout is a failed check, even if the overlay is perfect.
 
 ## Step 7: review (form)
 
@@ -161,7 +165,7 @@ Send only the final image with SendUserFile (the transparent PNG, or the white p
 - the colour codes used, part by part, with the chart values and the sRGB values;
 - codes that had no values in the chart and were taken from the printed swatch;
 - marking elements taken from another variant's or version's spec;
-- parts assumed (no spec covers them);
+- zones the specs did not cover, and what the user decided for each (none are assumed by the skill);
 - any defect still visible (small texts, small logos).
 
 ## Connector notes
@@ -183,10 +187,11 @@ Magnific:
 
 - A product photo in the inputs used as a reference: its colours fight the chart values. Ignore photos.
 - Screen came out black or navy: the marking crop has a black background. Recolour it with `recolor_panel.py` and say in the prompt that the screen is not black.
-- Element missing from this variant's marking spec (for example a sticker on the lid): it is often in another variant's or a newer version's spec.
+- Element missing from this variant's marking spec (for example a sticker on the lid): it may be in another variant's or a newer version's spec. Tell the user and ask; never use it silently.
 - Colour codes with no values in the chart: use the printed swatch, and say the colour is approximate.
 - Small sticker or logo on a surface seen at a grazing angle comes out small or tilted: describe its shape explicitly; it may stay imperfect at 1K.
 - Small screen texts imprecise at 1K: use 2K or more when they matter.
 - General image model instead of an editing model: the product deforms.
 - Model and aspect ratio left on auto (seen on Magnific): re-skin mirrored and enlarged. Set them explicitly.
 - Repeated regenerations and rescue edits after a failed check burn credits without fixing the cause: stop after two failures and ask.
+- Painting from the colour-spec text alone, without the callout drawings: a ribbed band painted in the colour of a vent window that sits on the back of the product, the visible shell of a part painted in the colour of an inner part, a ring painted chrome that is not visible on this view, the marking of one variant applied to the others. Read the callout drawings first and build the zone table; anything the specs do not cover is asked, never guessed.

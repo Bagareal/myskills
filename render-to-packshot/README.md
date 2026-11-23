@@ -34,7 +34,7 @@ grey render ──► pad to ratio ──► re-skin (editing model: render + co
 |---|---|---|
 | 0. Inputs | Unzip, list files, read PDFs and spreadsheets, sort variants and versions, find a connector | chat + local |
 | 1. Settings | Variant, connector and model, background, screen on/off; aspect ratio, resolution and variants; balance and cost per round | forms + connector |
-| 2. Spec reading | Parts with colour code, chart values and finish; marking elements and their positions; assumed parts marked; user confirms | form |
+| 2. Spec reading | Zone table built from the callout drawings (part number, colour code, chart values, finish); marking elements and their positions; zones the specs do not cover are asked, never assumed; user confirms | form |
 | 3. References | Colour sheet from the chart values; marking elements cropped from the PDFs; black screen backgrounds recoloured to the spec colour | local scripts |
 | 4. Canvas | Render padded (never cropped) to the target ratio | local script |
 | 5. Re-skin | Editing model call with a geometry-locking prompt and the references | connector |
@@ -42,7 +42,7 @@ grey render ──► pad to ratio ──► re-skin (editing model: render + co
 | 7. Review | Re-skin and overlay shown; accept, regenerate or fix a part | form |
 | 8. Cutout | Transparent PNG from the user mask or a render-derived mask | local script |
 
-At the end Claude reports the colour codes used part by part with their values, the codes taken from a printed swatch, the elements taken from another variant's spec and the assumed parts.
+At the end Claude reports the colour codes used part by part with their values, the codes taken from a printed swatch, the elements taken from another variant's spec (only after the user agreed) and the zones the specs did not cover, with the user's decision for each.
 
 Every choice is asked through multiple-choice forms; Claude talks to the user in their own language.
 
@@ -153,10 +153,11 @@ python3 -I scripts/recolor_panel.py screen.png screen_spec.png 151,170,166
 |---|---|---|
 | Colours drift from the spec | A product photo was used as a reference | Photos are always ignored |
 | Screen black or navy instead of the spec colour | Marking crop drawn on black | `recolor_panel.py`, and the prompt says the screen is not black |
-| Sticker or logo missing | Not drawn in this variant's marking spec | Look in the other variants' and versions' specs |
+| Sticker or logo missing | Not drawn in this variant's marking spec | Look in the other variants' and versions' specs, tell the user and ask before using it |
 | Colour approximate | Code with no values in the chart | Printed swatch used, and reported |
 | Small sticker small or tilted | Surface seen at a grazing angle | Describe its shape explicitly in the prompt; higher resolution |
 | Small screen texts imprecise | 1K resolution | 2K or more |
+| Part painted in the colour of a look-alike part | Colour spec read from the text, without the callout drawings | Callout drawings first, zone table, anything not covered is asked |
 | IoU lower with a correct product | Generated background slightly darker at the edges, or a shadow | The overlay decides |
 | Product deforms | General text-to-image model | Multi-image editing model only |
 | Re-skin mirrored or enlarged | Model and aspect ratio left on `auto` | Set them explicitly |
