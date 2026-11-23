@@ -49,7 +49,7 @@ Every choice is asked through multiple-choice forms; Claude talks to the user in
 ## Requirements
 
 - **Claude** with skills enabled (claude.ai, Claude desktop app, or Claude Code), with code execution.
-- **A generative-AI connector** (MCP) that offers a multi-image editing model, for example fal, Magnific, Replicate or a Google Gemini connector. Recommended model: **Nano Banana 2.1**, with **Nano Banana 2** as fallback.
+- **A generative-AI connector** (MCP) that offers a multi-image editing model. **Tested with Magnific**; other connectors (fal, Replicate, a Google Gemini connector...) need the generation step adapted, see [Connectors and credits](#connectors-and-credits). Recommended model: **Nano Banana 2.1**, with **Nano Banana 2** as fallback.
 - **Python 3** with `numpy`, `Pillow`, `scipy` (and `openpyxl` for spreadsheet specs), and **poppler-utils** (`pdftoppm`, `pdftotext`, `pdfinfo`). The scripts cost no credits.
 
 ## Installation
@@ -92,6 +92,8 @@ Then attach the zip, or the render, the mask, the specs and the chart as single 
 | Resolution and variants | 1K/2K/4K, 1-4 images | 2K, 1 image |
 
 ## Connectors and credits
+
+**Tested on Magnific only.** This skill has been built and tested with Magnific and Nano Banana 2.1. Everything else in it is connector-independent: the scripts run locally, and the steps and forms are the same anywhere. The only connector-specific part is the generation call in step 5 (how files are uploaded, the model ID, the parameter names). To use another connector, aggregator or model (fal, Replicate, a Google Gemini connector, a different editing model...), adapt that part: the upload of the local files, the model ID, and the mapping of input images, aspect ratio, resolution and number of images onto its parameters, then update the "Connector notes" section of `SKILL.md`. The fal column below comes from [render-reskin](../render-reskin), where fal was used, and has not been tested with this skill.
 
 Same rules as the other imagery skills in this repository:
 
