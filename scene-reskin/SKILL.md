@@ -42,6 +42,7 @@ All images have the photo's resolution.
 | `<name>_SCENE_composite.jpg` | The photo with the grey product placed on it (neutral grey, no shadows, no contact shadow). Only for the user's reference: not sent to the model |
 | `<name>_SCENE_grey.png` | Only the grey product, transparent background, exact position |
 | `<name>_SCENE_mask.png`, `<name>_SCENE_mask_bw.png` | Product mask (opaque on transparent / black on white), antialiased |
+| `<name>_SCENE_mask_alpha.png` | Only when a part was made see-through in the viewer (a clear bowl, a cover): the same mask, where that part covers only as much as it lets through. Not used by the stages below: they use `_mask.png`, where the see-through part counts as solid, and `unpack_scene.py` leaves it out. Use it only if the user wants a transparent cutout of the product alone with that part see-through |
 | `<name>_SCENE.json` | Grid corners, focal length, product position/rotation/size, camera (`focal_mm`, `fov_vertical_deg`, `matrix_world`) |
 
 ## Fixed rules

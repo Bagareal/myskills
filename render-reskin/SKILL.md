@@ -39,7 +39,7 @@ Do not modify `compare.py`: it is the reference check.
 Ask in chat for:
 1. The grey render (plain, uniform background).
 2. Real photos of the product. Tell the user plainly: the more reference photos (front, side, back, details), the better the result. With a single photo the model has to guess the parts that photo does not show, and it can get their colours or finishes wrong.
-3. Optional, only if they want a transparent PNG: a mask of the render (subject black on white background, or a PNG with alpha), same framing as the render. Explain that it gives the cleanest edges and handles openings in the product correctly; without it the mask is derived from the render.
+3. Optional, only if they want a transparent PNG: a mask of the render (subject black on white background, or a PNG with alpha), same framing as the render. Explain that it gives the cleanest edges and handles openings in the product correctly; without it the mask is derived from the render. The 3D viewer's Save the image gives one ZIP (`<name>_POV.zip`): unzip it first. It holds the render, `_mask.png`, `_mask_bw.png` and, only when a part was made see-through in the viewer (a clear bowl, a cover), `_mask_alpha.png`.
 
 Check sizes and aspect ratios of what arrived.
 
@@ -115,7 +115,7 @@ Send the re-skin(s) and the overlay(s) with SendUserFile, report the IoU and wha
 python3 -I scripts/cutout.py render_pad.png reskin.png reskin_cutout.png [mask.png]
 ```
 
-With the user mask it uses that (black subject on white, or alpha; any resolution with the same framing as the original render). Without one it derives the mask from the render: background threshold, small closing, holes filled, largest object kept, a few pixels eroded, soft edge. Run it only after the overlay passed: if the product moved, the mask no longer fits.
+With the user mask it uses that (black subject on white, or alpha; any resolution with the same framing as the original render). When the viewer gave a `_mask_alpha.png`, pass that one here instead of `_mask.png`: the see-through part then stays see-through in the transparent PNG (cutout.py keeps the in-between alpha values). Every position check (IoU, overlay) keeps using `_mask.png`. Without one it derives the mask from the render: background threshold, small closing, holes filled, largest object kept, a few pixels eroded, soft edge. Run it only after the overlay passed: if the product moved, the mask no longer fits.
 
 The script also writes `<name>_preview_red.png` and `<name>_preview_dark.png`. Check them in crops along the edges: light or grey fringe, jagged steps, missing thin parts (cables, feet), filled openings. The previews are for your own check only: never send them to the user. Limits of the derived mask, to tell the user when they apply: openings where the background shows through get filled (a user mask fixes it); surfaces almost the same colour as the render background can be cut; JPEG renders give slightly stepped edges.
 

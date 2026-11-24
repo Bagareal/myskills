@@ -42,7 +42,7 @@ The `scripts/` folder next to this file holds the local tools. They cost no cred
 
 The user gives a zip or single files. Ask in chat for what is missing:
 1. The grey render (plain, uniform background).
-2. Optional: a mask of the render (subject black on white, or a PNG with alpha), same framing as the render. It gives the cleanest cutout and handles openings correctly.
+2. Optional: a mask of the render (subject black on white, or a PNG with alpha), same framing as the render. It gives the cleanest cutout and handles openings correctly. The 3D viewer's Save the image gives one ZIP (`<name>_POV.zip`): unzip it first. It holds the render, `_mask.png`, `_mask_bw.png` and, only when a part was made see-through in the viewer (a clear bowl, a cover), `_mask_alpha.png`.
 3. The marking spec(s): PDF with logos, pictograms, stickers, printed texts and the screen layout (often with the screen ON and OFF).
 4. The colour spec(s): PDF or spreadsheet listing each part with its colour name, colour code and finish.
 5. The colour conversion chart: PDF listing each colour code with its values (Adobe RGB, sRGB/HEX, CMYK, Pantone, NCS) and a printed swatch.
@@ -157,7 +157,7 @@ Send the re-skin(s) and the overlay(s) with SendUserFile, report the IoU and wha
 ```
 python3 -I scripts/cutout.py render_pad.png reskin.png reskin_cutout.png [mask.png]
 ```
-With the user mask it uses that (black subject on white, or alpha; any resolution with the same framing as the original render). Without one it derives the mask from the render. Run it only after the overlay passed. Check the red and dark previews in crops along the edges: light or grey fringe, jagged steps, missing thin parts, filled openings. The previews are for your own check only: never send them to the user.
+With the user mask it uses that (black subject on white, or alpha; any resolution with the same framing as the original render). When the viewer gave a `_mask_alpha.png`, pass that one here instead of `_mask.png`: the see-through part then stays see-through in the transparent PNG (cutout.py keeps the in-between alpha values). Every position check (IoU, overlay) keeps using `_mask.png`. Without one it derives the mask from the render. Run it only after the overlay passed. Check the red and dark previews in crops along the edges: light or grey fringe, jagged steps, missing thin parts, filled openings. The previews are for your own check only: never send them to the user.
 
 ## Delivery
 
