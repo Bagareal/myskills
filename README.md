@@ -13,6 +13,7 @@ A collection of [Claude](https://claude.ai) skills, mostly for AI product imager
 | [scene-reskin](scene-reskin) | Replaces the grey 3D stand-in placed in a photo of an environment (a `_SCENE` export from the 3D viewer) with the real product, same position and perspective, re-skinned from real photos and then integrated with AI-made shadows and reflections and the scene's light, with position checks | Final image |
 | [summarize](summarize) | Fetches a link (article, blog post, page) and replies with a structured summary in your language: thesis, key arguments, examples, FAQ, conclusion | Summary |
 | [video-digest](video-digest) | Digests a pasted video or podcast transcript on any topic: accuracy score from web fact-checks, usefulness score for you, numbered summary with a verdict per point, what you can use, then deep dives on the points you pick | Digest, then deep dives |
+| [session-handoff](session-handoff) | Before you leave a long chat and come back later, writes a short recap (goal, decisions, current state, files and commands, open points, next step) to attach to a fresh chat; checks the real state read-only where tools exist | One Markdown file |
 
 The four imagery skills share the same principle: **the render's geometry is never regenerated.** A multi-image editing model only paints real materials onto it (from photos, or from the spec documents in `render-to-packshot`), and a local check (silhouette IoU plus a 50% overlay) confirms that nothing moved before the result is shown.
 
@@ -48,7 +49,7 @@ Each skill's README has a "Connectors and credits" section with the exact parame
 ```bash
 git clone https://github.com/Bagareal/myskills.git
 mkdir -p ~/.claude/skills
-cp -r myskills/ramble-to-brief myskills/render-reskin myskills/render-to-packshot myskills/render-to-product-video myskills/scene-reskin myskills/summarize myskills/video-digest ~/.claude/skills/
+cp -r myskills/ramble-to-brief myskills/render-reskin myskills/render-to-packshot myskills/render-to-product-video myskills/scene-reskin myskills/session-handoff myskills/summarize myskills/video-digest ~/.claude/skills/
 ```
 
 ### Building the zips yourself
@@ -62,6 +63,7 @@ zip -r render-to-packshot.zip render-to-packshot -x '*/__pycache__/*'
 zip -r render-to-product-video.zip render-to-product-video -x '*/__pycache__/*' 'render-to-product-video/examples/*'
 zip -r scene-reskin.zip scene-reskin -x '*/__pycache__/*'
 zip -r ramble-to-brief.zip ramble-to-brief
+zip -r session-handoff.zip session-handoff
 zip -r summarize.zip summarize
 zip -r video-digest.zip video-digest
 ```
@@ -113,6 +115,9 @@ myskills/
 │       ├── fit_canvas.py
 │       ├── lock_background.py
 │       └── compare_scene.py
+├── session-handoff/
+│   ├── SKILL.md
+│   └── README.md
 ├── summarize/
 │   ├── SKILL.md
 │   └── README.md
